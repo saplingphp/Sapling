@@ -68,7 +68,22 @@ It's a small thing but this way there is no excuse for being lazy and not escapi
 
 Controllers
 -----------
-All controllers must extend the **__`Controller`__** class (and thus be called `Controller_Xxx` and be located in the file `/classes/controller/xxx.php`).
+In Sapling controllers aren't classes but closures with parameters that return HTML (or whatever). Let's take a look at the code that defines the test page in the file `bootstrap.php` :
+
+```PHP
+<?php
+Controller::register("test")->on("GET", "/test/<a>")->execute(
+	array(Bind::URI("a"), Bind::GET("b")),
+	function($x, $y) {
+		return "Test page called with parameters : $x, $y";
+	}
+);
+```
+* `"test"` is the name of the controller. It can be used to refer to the controller later on.
+* `"GET"` is the HTTP method accepted by this controller. If more than one method is needed, they can be passed as an array, for example `array("GET", "POST")`.
+* `"/test/<a>"` is an URI pattern. Any URI matching this pattern will trigger the execution of the controller.
+* `array(Bind::URI("a"), Bind::GET("b"))` are bindings. There is one binding by function parameter. Bindings describe from where in the request the function parameters should be pulled.
+* next comes the function that defines the content that this controller generates. Note that the function RETURNS that content, it doesn't echo it.
  
 Resources
 ---------
