@@ -1,0 +1,11 @@
+# Turn on URL rewriting
+RewriteEngine On
+
+# If you use an alias, it may be necessary to set this appropriately :
+# RewriteBase /
+
+# Allow any files or directories that exist to be displayed directly
+RewriteCond %{REQUEST_FILENAME} !-f
+
+# Rewrite all other URLs to index.php
+RewriteRule .* system/index.php
