@@ -4,8 +4,8 @@
 /****************************** REGISTER CONTROLLERS *********************************/
 /*************************************************************************************/
 
-	Controller::register("test")->on("GET", "/test/<param1>")->execute(
-		array(Bind::URI("param1"), Bind::GET("param2")),
+	Controller::register("test")->on("GET", "/test/<a>")->execute(
+		array(Bind::URI("a"), Bind::GET("b")),
 		function($x, $y) {
 			return "Test page called with parameters : $x, $y";
 		}
