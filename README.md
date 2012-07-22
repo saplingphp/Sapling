@@ -2,5 +2,3 @@ Sapling
 =======
 
 PHP microframework.
-
-test
