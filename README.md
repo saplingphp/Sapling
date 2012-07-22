@@ -1,10 +1,11 @@
-PicoPHP
+Sapling
 =======
 
-PicoPHP is an HMVC microframework for PHP that aims to cover only what is absolutely necessary to start a new PHP project.
+Sapling is an HMVC microframework for PHP that aims to cover only the minimum requirements to start a new PHP project.
 
 More specifically you will find here :
 * an URL router / reverse router,
+* an infrastructure for controllers,
 * a class autoloader,
 * a tiny template engine (optional).
 
@@ -13,23 +14,26 @@ But you won't find :
 * an ORM,
 * helpers to handle file transfers, forms, etc.
 
-Additionally to the documentation found here, if you're unsure about anything, don't hesitate to read the code. It's short (< 25KB) and commented.
-
 Requirements
 ------------
 PHP 5.3, apache with mod_rewrite enabled.
 
 Installation
 ------------
-Drop the code in any directory under the Apache document root (for example `/dir`). Point your browser at the URL <http://localhost/dir/test/hello/world>. That should display the test page.
+Drop the code in any directory under the Apache document root (for example `/dir`). Point your browser at the URL <http://localhost/dir/test/hello?b=world>. That should display the test page.
 
 Directory structure
 -------------------
 
-    --+-- classes
-      +-- media --+-- style
-      |           +-- js
-      +-- views
+    --+-- bootstrap.php          // Define your routes here.
+      +-- classes                // Put your own classes in there.
+      +-- media  --+-- style     // Stylesheets go here.
+      |            +-- js        // Javascript go here.
+      +-- system --+-- classes   // System classes are here.
+      |            +-- index.php // Entry point defined in .htaccess file
+      +-- views                  // Put your views here.
+      
+The code of the framework is inside the system directory and shouldn't be modified. Everything else is yours, including the file `bootstrap.php`.
 
 Constants
 ---------
