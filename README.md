@@ -68,7 +68,23 @@ It's a small thing but this way there is no excuse for being lazy and not escapi
 
 Controllers
 -----------
-In Sapling controllers aren't classes but closures with parameters that return HTML (or whatever). Let's take a look at the code that defines the test page in the file `bootstrap.php` :
+In Sapling controllers aren't classes but closures that return some content. Each controller is associated with an URI pattern. When the requested URI matches the URI pattern of a controller, the closure is executed and whatever it returns is sent to the client as a response.
+
+Controllers should be registered in the file `bootstrap.php`. The code required to register a controller has the following structure :
+
+```PHP
+<?php
+Controller::register($name)->on($method, $pattern)->execute($bindings, $closure);
+```
+
+Where :
+* `$name` is the name of the controller. It can be used to refer to it later on.
+* `$method` is the HTTP method accepted by the controller. To accept more than one, pass an array.
+* `$pattern` is the URI pattern that triggers the execution of the closure.
+* `$bindings` is the array of bindings. There is one binding by closure parameter. Bindings describe from where the data should be pulled to feed the closure.
+* `$closure` is the closure that define the content returned by the controller.
+
+Let's take a closer look at the code that defines the test page :
 
 ```PHP
 <?php
@@ -79,23 +95,9 @@ Controller::register("test")->on("GET", "/test/<a>")->execute(
 	}
 );
 ```
-* `"test"` is the name of the controller. It can be used to refer to the controller later on.
-* `"GET"` is the HTTP method accepted by this controller. If more than one method is needed, they can be passed as an array, for example `array("GET", "POST")`.
-* `"/test/<a>"` is an URI pattern. Any URI matching this pattern will trigger the execution of the controller.
-* `array(Bind::URI("a"), Bind::GET("b"))` are bindings. There is one binding by function parameter. Bindings describe from where in the request the function parameters should be pulled.
-* next comes the function that defines the content that this controller generates. Note that the function RETURNS that content, it doesn't echo it.
+
+The controller is called `"test"`. It reacts on `"GET"` HTTP requests, but only those that match the pattern `"/test/<a>"`. The closure has two parameters : `$x` and `$y`. The first one is bound to the URI parameter `<a>` while the second will be pulled from the `$_GET` value of the key `b`.
  
-Resources
----------
-A resource is something that can be reached through an URL and returns some content.
-
-In this framework, resources are controller functions associated with an URI pattern. When the requested URI matches the pattern of a resource, it is executed and whatever it returns is sent to the client as a response.
-
-Resources must be explicitly registered in the `index.php` file, using the **__`Resource::register($controller, $method, $pattern)`__** function, where :
-* `$controller` is the name of the controller class (without the `Controller_` prefix),
-* `$method` is the name of the method,
-* `$pattern` is the URI pattern that will, when the requested URI matches it, trigger the execution of the resource.
-
 URI patterns
 ------------
 URI patterns are URI strings that may include parameter segments. Parameters are regex delimited by parentheses following the [PCRE syntax](http://www.php.net/manual/en/reference.pcre.pattern.syntax.php).
