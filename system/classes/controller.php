@@ -283,7 +283,7 @@ class Controller {
 	 * @param mixed $methods
 	 * @param string $pattern
 	 */
-	public function when($methods, $pattern) {
+	public function on($methods, $pattern) {
 		$this->methods = is_array($methods) ? $methods : array($methods);
 		$this->pattern = URI_ROOT . $pattern;
 		return $this;

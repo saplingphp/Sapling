@@ -4,7 +4,7 @@
 /****************************** REGISTER CONTROLLERS *********************************/
 /*************************************************************************************/
 
-	Controller::register("test")->when("GET", "/test/<param1>")->execute(
+	Controller::register("test")->on("GET", "/test/<param1>")->execute(
 		array(Bind::URI("param1"), Bind::GET("param2")),
 		function($x, $y) {
 			return "Test page called with parameters : $x, $y";
@@ -31,7 +31,7 @@
 /*************************************************************************************/
 	
 	try {
-		echo Controller::dispatch();
+        echo Controller::dispatch();
 	}
 	catch (Exception $e) {
 		throw $e; // Do something more interesting here .
