@@ -147,9 +147,9 @@ When the URI `/test/1?b=2&e=5` is requested with `$_POST['c'] === 3` and `$_COOK
 One may wonder what's the difference between defining bindings like this :
 ```PHP
 <?php
-Controller::register("test")->on("GET", "/test")->execute(
-	array(Bind::GET("a"), Bind::GET("b")),
-	function($x, $y) {
+Controller::register("test")->on("GET", "/test/<a>")->execute(
+	array(Bind::URI("a"), Bind::GET("b"), Bind::GET("c")),
+	function($x, $y, $z) {
 		// ...
 	}
 );
@@ -157,19 +157,19 @@ Controller::register("test")->on("GET", "/test")->execute(
 ...and accessing superglobal arrays directly in the closure, like this :
 ```PHP
 <?php
-Controller::register("test")->on("GET", "/test")->execute(
-	array(),
-	function() {
-		$x = $_GET['a'];
+Controller::register("test")->on("GET", "/test/<a>")->execute(
+	array(Bind::URI("a")),
+	function($x) {
 		$y = $_GET['b'];
+		$z = $_GET['c'];
 		// ...
 	}
 );
 ```
 
-The difference is twofold :
-* If the bindings are defined explicitely, the framework can make use of them to help you automatically generate proper URIs : `Controller::get("test")->uri(1, 2)` generates the URI `/test?a=1&b=2` (see [reverse routing](#reverse-routing)). This isn't possible otherwise.
-* If superglobal arrays are accessed in the closure, you can't call it yourself without messing with the superglobal arrays to set up the right context before the call. This makes it difficult to use for internal requests.
+Apart from the purely esthetical value of treating all arguments the same way, the advantage of using bindings is twofold :
+* If the bindings are defined explicitely, the framework can make use of them to help you automatically generate proper URIs : `Controller::get("test")->uri(1, 2, 3)` generates the URI `/test/1?b=2&c=3` (see [reverse routing](#reverse-routing)). This isn't possible otherwise.
+* If superglobal arrays are accessed in the closure, you can't call it yourself without messing with the superglobal arrays to set up the right context before the call. This makes it difficult to use for internal requests (see [internal requests](#internal-requests)).
 
 Reverse routing
 ---------------
