@@ -134,6 +134,13 @@ return array(
 
 As you can see, controller identifiers are actually structured like relative paths. Those path aren't related at all to what URI the controller matches. They should be chosen to describe at best the logical hierarchy of controllers.
 
+### Why closures and not a class hierarchy ?
+Because controllers can't be properly organized into a single class hiearchy without running into problems of code duplication. And because artificially grouping vaguely related functions into controller classes just to do it the OO way doesn't make sense.
+
+To illustrate the first point, consider for example a situation where controllers could be hierarchically organized according to security requirements or according to page layout. If those two hierarchies match, there is no problem. But if they don't, you will have to choose one way to structure the code over the other. If you choose security, you will have code duplication for page layout and the other way around.
+
+To avoid code duplication in this case, inheritance isn't the right tool. We need a flexible mechanism more akin to composition : see [wrappers](#wrappers).
+
 URI patterns
 ------------
 URI patterns are URI strings that may include named parameters, for example `"/hello/<a>"`. By default, parameters match any sequence of characters but `/`. The range of strings that a parameter matches can be restricted by using a [regex](http://www.php.net/manual/en/reference.pcre.pattern.syntax.php), for example `"/hello/<a:\\d+>"`.
