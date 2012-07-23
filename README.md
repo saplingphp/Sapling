@@ -68,7 +68,7 @@ Where :
 * `$name` is the name of the controller. It can be used to refer to it later on.
 * `$method` is the HTTP method accepted by the controller. To accept more than one, pass an array.
 * `$pattern` is the URI pattern that triggers the execution of the closure.
-* `$bindings` is the array of bindings. There is one binding by closure argument. Bindings describe from where the data should be pulled to feed the closure.
+* `$bindings` is the array of bindings, one by closure argument, describing from where the data should be pulled.
 * `$closure` is the closure that define the content returned by the controller.
 
 For example let's take a closer look at the code that defines the test page :
