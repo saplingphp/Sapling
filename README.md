@@ -91,13 +91,13 @@ If the code of the closure is long, you may find it more convenient to define it
 
 When registering a controller in `bootstrap.php`, you may omit the call to `->execute($bindings, $closure)`. In this case, the framework expects the bindings and closure to be defined in a file located in the `controllers` folder in a subpath matching the identifier of the controller.
 
-For example in the file `bootstrap.php` :
+For example if we have this in the file `bootstrap.php` :
 ```PHP
 <?php
-Controller::register("blog/post")->on("GET", "/post/<id:\\d+>");
+Controller::register("blog/post/edit")->on("GET", "edit/post/<id:\\d+>");
 ```
 
-And in the file `/controllers/blog/post.php` :
+Then the following must be located in the file `/controllers/blog/post/edit.php` :
 ```PHP
 <?php
 return array(
@@ -127,7 +127,20 @@ Each named parameter in the URI pattern becomes available for binding with a clo
 
 Bindings
 --------
+For each controller, and for each closure argument, a binding should be defined. Each binding describes from which parameter in the URI or in the superglobal arrays the data should be pulled to feed a closure argument.
 
+For example, given the following controller :
+```PHP
+<?php
+Controller::register("test")->on("POST", "/test/<a>")->execute(
+	array(Bind::URI("a"), Bind::GET("b"), Bind::POST("c"), Bind::COOKIE("d"), Bind::REQUEST("e")),
+	function($v, $w, $x, $y, $z) {
+		// ...
+	}
+);
+```
+
+When the URI `/test/1?b=2&e=5` is requested with `$_POST['c'] === 3` and `$_COOKIE['d'] === 4`, the closure will be called with the arguments `1, 2, 3, 4, 5`.
 
 
 Reverse routing
