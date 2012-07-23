@@ -89,7 +89,7 @@ The controller is called `"test"`. It reacts on `"GET"` HTTP requests, but only 
 
 If the code of the closure is long, you may find it more convenient to define it in a separate file.
 
-When registering a controller in `bootstrap.php`, you may omit the call to `->execute($bindings, $closure)`. In this case, the framework expects the bindings and closure to be defined in a file located in the `controllers` folder in a subpath matching the name of the controller.
+When registering a controller in `bootstrap.php`, you may omit the call to `->execute($bindings, $closure)`. In this case, the framework expects the bindings and closure to be defined in a file located in the `controllers` folder in a subpath matching the identifier of the controller.
 
 For example in the file `bootstrap.php` :
 ```PHP
