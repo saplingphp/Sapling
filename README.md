@@ -41,6 +41,30 @@ Directory structure
       
 The code of the framework is inside the system directory and shouldn't be modified. Everything else is yours, including the file `bootstrap.php`.
 
+Constants
+---------
+The framework defines the following constants that you may find useful should you want to build URLs that stay valid if the website directory moves around in the document tree :
+
+* **__`URI_ROOT`__** : URI of the root of the website directory.
+* **__`URI_ROOT_CSS`__** : URI of the root of the `style` directory.
+* **__`URI_ROOT_JS`__** : URI of the root of the `js` directory.
+
+So if you need to build a link to the stylesheet `site.css` in the `style` directory, you write `URI_ROOT_CSS . '/site.css'` .
+
+Global functions
+----------------
+### The e() function
+The file index.php defines the following shortcut for htmlspecialchars :
+
+```PHP
+<?php
+function e($string) {
+	return htmlspecialchars($string);
+}
+```
+
+It's a small thing but this way there is no excuse for being lazy and not escaping variables in views.
+
 Classes autoloading
 -------------------
 The first time you refer to a class called `A_B_C`, the file `/classes/a/b/c.php` will be automatically included. If the code of the class `A_B_C` is indeed in the file `/classes/a/b/c.php`, the class will be loaded automatically without any need for you to include anything explicitly.
@@ -282,26 +306,3 @@ class Controller {
 	}
 }
 ```
-
-Constants
----------
-The file `index.php` defines the following constants that you may find useful should you want to build URLs that stay valid if the website directory moves around in the document tree :
-
-* **__`URI_ROOT`__** : URI of the root of the website directory.
-* **__`URI_ROOT_CSS`__** : URI of the root of the `style` directory.
-* **__`URI_ROOT_JS`__** : URI of the root of the `js` directory.
-
-So if you need to build a link to the stylesheet `site.css` in the `style` directory, you write `URI_ROOT_CSS . '/site.css'` .
-
-The e() function
-----------------
-The file index.php defines the following shortcut for htmlspecialchars :
-
-```PHP
-<?php
-function e($string) {
-	return htmlspecialchars($string);
-}
-```
-
-It's a small thing but this way there is no excuse for being lazy and not escaping variables in views.
