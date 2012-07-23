@@ -23,6 +23,7 @@ Installation
 Drop the code in any directory under the Apache document root (for example `/dir`). Point your browser at the URL <http://localhost/dir/test/hello?b=world>. That should display the test page.
 
 If it doesn't work :
+
 1. Make sure mod_rewrite is enabled.
 2. You may be using an Apache alias. Uncomment the Rewrite_Base property in the `.htaccess` file and edit it so that it contains the URI of the root dictory of the website.
 
@@ -31,6 +32,7 @@ Directory structure
 
     --+-- bootstrap.php          // Define your routes here.
       +-- classes                // Put your own classes in there.
+      +-- controllers            // Controllers that aren't defined inline go here.
       +-- media  --+-- style     // Stylesheets go here.
       |            +-- js        // Javascript go here.
       +-- system --+-- classes   // System classes are here.
@@ -51,7 +53,11 @@ Controllers
 -----------
 In Sapling controllers aren't classes but closures associated with an URI pattern. When the requested URI matches the URI pattern, the closure is executed and whatever it **returns** is sent to the client as a response.
 
-Controllers should be registered in the file `bootstrap.php`, like so :
+Controllers should be registered in the file `bootstrap.php`.
+
+### Inline definition
+
+If the code of the closure is relatively short, the controllers may be defined entirely in the `bootstrap.php` file, like so :
 
 ```PHP
 <?php
@@ -65,7 +71,7 @@ Where :
 * `$bindings` is the array of bindings. There is one binding by closure argument. Bindings describe from where the data should be pulled to feed the closure.
 * `$closure` is the closure that define the content returned by the controller.
 
-Let's take a closer look at the code that defines the test page :
+For example let's take a closer look at the code that defines the test page :
 
 ```PHP
 <?php
@@ -78,7 +84,31 @@ Controller::register("test")->on("GET", "/test/<a>")->execute(
 ```
 
 The controller is called `"test"`. It reacts on `"GET"` HTTP requests, but only those that match the pattern `"/test/<a>"`. The closure has two arguments : `$x` and `$y`. The first one is bound to the URI parameter `a` while the second one is bound to the value of the key `b` in the `$_GET` superglobal array.
- 
+
+### Definition in a separate file
+
+If the code of the closure is long, you may find it more convenient to define it in a separate file.
+
+When registering a controller in `bootstrap.php`, you may omit the call to `->execute($bindings, $closure)`. In this case, the framework expects the bindings and closure to be defined in a file located in the `controllers` folder in a subpath matching the name of the controller.
+
+For example in the file `bootstrap.php` :
+```PHP
+<?php
+Controller::register("blog/post")->on("GET", "/blog/post/<id:\\d+>");
+);
+```
+
+And in the file `/controllers/blog/test.php` :
+```PHP
+<?php
+return array(
+	array(Bind::URI("id")),
+	function($post_id) {
+		// Return HTML of blog post of given id.
+	}
+);
+```
+
 URI patterns
 ------------
 URI patterns are URI strings that may include named parameters, for example `"/hello/<a>"`. By default, parameters match any sequence of characters but `/`. The range of strings that a parameter matches can be restricted by using a [regex](http://www.php.net/manual/en/reference.pcre.pattern.syntax.php), for example `"/hello/<a:\\d+>"`.
