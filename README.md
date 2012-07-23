@@ -81,7 +81,7 @@ Where :
 * `$name` is the name of the controller. It can be used to refer to it later on.
 * `$method` is the HTTP method accepted by the controller. To accept more than one, pass an array.
 * `$pattern` is the URI pattern that triggers the execution of the closure.
-* `$bindings` is the array of bindings. There is one binding by closure parameter. Bindings describe from where the data should be pulled to feed the closure.
+* `$bindings` is the array of bindings. There is one binding by closure argument. Bindings describe from where the data should be pulled to feed the closure.
 * `$closure` is the closure that define the content returned by the controller.
 
 Let's take a closer look at the code that defines the test page :
@@ -96,7 +96,7 @@ Controller::register("test")->on("GET", "/test/<a>")->execute(
 );
 ```
 
-The controller is called `"test"`. It reacts on `"GET"` HTTP requests, but only those that match the pattern `"/test/<a>"`. The closure has two parameters : `$x` and `$y`. The first one is bound to the URI parameter `<a>` while the second one is bound to the value of the key `b` in the `$_GET` superglobal array.
+The controller is called `"test"`. It reacts on `"GET"` HTTP requests, but only those that match the pattern `"/test/<a>"`. The closure has two arguments : `$x` and `$y`. The first one is bound to the URI parameter `a` while the second one is bound to the value of the key `b` in the `$_GET` superglobal array.
  
 URI patterns
 ------------
@@ -111,21 +111,20 @@ More precisely, URI patterns are turned into regex by the following process :
 
 If the website is located in the directory `/sub`, then the following URI pattern `/hello/<a:\\d+>` becomes `^"\\/sub\\/hello\\/(?<a>\\d+)$i"` and matches the URL `http://www.mydomain.com/sub/hello/123`.
 
-Routing
--------
-Routing is the process of calling the right resource with the right parameters, given a requested URI.
+Each named parameter in the URI pattern becomes available for binding with a closure argument using the syntax `Bind:URI($param)`.
 
-This is done by looping over all the registered resource patterns until we find one that matches the requested URI. When that happens, the associated controller is instanciated and the resource function is called, with parameters values extracted from the URI passed as arguments.
+Bindings
+--------
 
-Thus, if you register a resource like this `Resource::register('test','index', 'test/(\w+)/(\w+)');` then for the requested URL `http://www.mydomain.com/test/hello/world`, the method `->index($a, $b)` will be called on the controller `Controller_Test` with `$a == 'hello'` and `$b == 'world'`.
+
 
 Reverse routing
 ---------------
-While routing goes from URI to resource and parameters, reverse routing goes the other way around. Given a resource and some parameters, it is the process of generating the URI that points to it.
+While routing goes from URI to controller and arguments, reverse routing goes the other way around. Given a controller and arguments, it is the process of generating the URI that points to it.
 
-You can generate the URI of a resource by calling **__`Resource::get($controller, $method)->uri($param1, $param2, ...)`__**. This will return the URI pattern associated with the resource where each parameter segment has been replaced by `$param1`, `$param2`, etc.
+You can generate the URI of a controller by calling **__`Controller::get($name)->uri($arg1, $arg2, ...)`__**. This will return the URI (query string included) that, if it is requested, will trigger the execution of the closure with the given arguments.
 
-Always generating URLs this way in views instead of building them manually will ensure that they automatically adjust, should the URI patterns associated with the resources change in the future, or should the directory of the website move in the document tree.
+Always generating URLs this way in views instead of building them manually will ensure that they automatically adjust, should the URI patterns associated with the controller change in the future, or should the directory of the website move in the document tree.
 
 Controller callbacks
 --------------------
