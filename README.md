@@ -22,6 +22,9 @@ Installation
 ------------
 Drop the code in any directory under the Apache document root (for example `/dir`). Point your browser at the URL <http://localhost/dir/test/hello?b=world>. That should display the test page.
 
+* If it doesn't work, make sure mod_rewrite is enabled.
+* If it still doesn't work, you may be using an Apache alias. Uncomment the Rewrite_Base property in the `.htaccess` file and edit it so that it contains the URI of the root dictory of the website.
+
 Directory structure
 -------------------
 
