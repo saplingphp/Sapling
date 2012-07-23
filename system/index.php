@@ -9,6 +9,7 @@
 	define('URI_ROOT_JS',				URI_ROOT . '/media/js');
 	define('DIR_ROOT',					dirname(__DIR__));
 	define('DIR_ROOT_VIEWS',			DIR_ROOT . '/views');
+	define('DIR_ROOT_CONTROLLERS',      DIR_ROOT . '/controllers');
 	define('DIR_ROOT_SYSTEM_CLASSES', 	DIR_ROOT . '/system/classes');
 	define('DIR_ROOT_USER_CLASSES', 	DIR_ROOT . '/classes');
 

@@ -132,12 +132,34 @@ class Controller {
 		$this->identifier		= $identifier;
 	}
 	
+	/**
+	 * Implementation getter.
+	 * 
+	 * @return callable
+	 */
 	protected function implementation() {
-		if ( ! isset($this->implementation)) {
-			// todo
-		}
+		if ( ! isset($this->implementation))
+			$this->load_implementation();
 		return $this->implementation;
 	}
+	
+   /**
+    * Bindings getter.
+    * 
+    * @return array
+    */
+   protected function bindings() {
+        if ( ! isset($this->bindings))
+            $this->load_implementation();
+        return $this->bindings;
+    }
+    
+    /**
+     * Lazy loads implementation and bindings.
+     */
+    protected function load_implementation() {
+    	list($this->bindings, $this->implementation) = require(DIR_ROOT_CONTROLLERS . '/' . $this->identifier . '.php'); 
+    }
 	
 	/**
 	 * Returns the pattern turned into a regex ready to be matched against an URI. 
@@ -192,7 +214,7 @@ class Controller {
 	 */
 	protected function resolve_bindings(array $uri, array $get, array $post, array $cookie, array $request) {
 		$params = array();
-		foreach($this->bindings as $binding)
+		foreach($this->bindings() as $binding)
 			$params[] = $binding->fetch($uri, $get, $post, $cookie, $request);
 		return $params;
 	}
@@ -237,7 +259,7 @@ class Controller {
 		// Generate URI and GET parameters arrays :
 		$params = func_get_args();
 		$uri = $get = $post = $cookie = $request = array();
-		foreach($this->bindings as $index => $binding)
+		foreach($this->bindings() as $index => $binding)
 			list($uri, $get, $post, $cookie, $request) = $binding->store($params[$index], $uri, $get, $post, $cookie, $request);
 		if ( ! empty($post) || ! empty($cookie)) throw new Exception("Cannot generate URI.");
 		$get = array_merge($get, $request);
