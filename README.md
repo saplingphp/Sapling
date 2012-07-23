@@ -1,10 +1,11 @@
-PicoPHP
+Sapling
 =======
 
-PicoPHP is an HMVC microframework for PHP that aims to cover only what is absolutely necessary to start a new PHP project.
+Sapling is an HMVC microframework for PHP that aims to cover only the minimum requirements to start a new PHP project.
 
-More specifically you will find here :
+Specifically you will find here :
 * an URL router / reverse router,
+* an infrastructure for controllers,
 * a class autoloader,
 * a tiny template engine (optional).
 
@@ -13,27 +14,36 @@ But you won't find :
 * an ORM,
 * helpers to handle file transfers, forms, etc.
 
-Additionally to the documentation found here, if you're unsure about anything, don't hesitate to read the code. It's short (< 25KB) and commented.
-
 Requirements
 ------------
 PHP 5.3, apache with mod_rewrite enabled.
 
 Installation
 ------------
-Drop the code in any directory under the Apache document root (for example `/dir`). Point your browser at the URL <http://localhost/dir/test/hello/world>. That should display the test page.
+Drop the code in any directory under the Apache document root (for example `/dir`). Point your browser at the URL <http://localhost/dir/test/hello?b=world>. That should display the test page.
+
+If it doesn't work :
+
+1. Make sure mod_rewrite is enabled.
+2. You may be using an Apache alias. Uncomment the Rewrite_Base property in the `.htaccess` file and edit it so that it contains the URI of the root dictory of the website.
 
 Directory structure
 -------------------
 
-    --+-- classes
-      +-- media --+-- style
-      |           +-- js
-      +-- views
+    --+-- bootstrap.php          // Define your routes here.
+      +-- classes                // Put your own classes in there.
+      +-- controllers            // Controllers that aren't defined inline go here.
+      +-- media  --+-- style     // Stylesheets go here.
+      |            +-- js        // Javascript go here.
+      +-- system --+-- classes   // System classes are here.
+      |            +-- index.php // Entry point defined in .htaccess file
+      +-- views                  // Put your views here.
+      
+The code of the framework is inside the system directory and shouldn't be modified. Everything else is yours, including the file `bootstrap.php`.
 
 Constants
 ---------
-The file `index.php` defines the following constants that you may find useful should you want to build URLs that stay valid if the website directory moves around in the document tree :
+The framework defines the following constants that you may find useful should you want to build URLs that stay valid if the website directory moves around in the document tree :
 
 * **__`URI_ROOT`__** : URI of the root of the website directory.
 * **__`URI_ROOT_CSS`__** : URI of the root of the `style` directory.
@@ -41,16 +51,9 @@ The file `index.php` defines the following constants that you may find useful sh
 
 So if you need to build a link to the stylesheet `site.css` in the `style` directory, you write `URI_ROOT_CSS . '/site.css'` .
 
-Classes autoloading
--------------------
-The first time you refer to a class called `A_B_C`, the file `/classes/a/b/c.php` will be automatically included. If the code of the class `A_B_C` is indeed in the file `/classes/a/b/c.php`, the class will be loaded automatically without any need for you to include anything explicitly.
-
-**So a class called `A_B_C` should always be located in the file `/classes/a/b/c.php`.**
-
-Additionally, and although this is not strictly required, if a class `B` extends a class `A`, then it should be called `A_B` (and thus be located in the file `/classes/a/b.php`). This way the directory structure of the `classes` folder will mirror the class hierarchy.
-
-The e() function
+Global functions
 ----------------
+### The e() function
 The file index.php defines the following shortcut for htmlspecialchars :
 
 ```PHP
@@ -62,68 +65,160 @@ function e($string) {
 
 It's a small thing but this way there is no excuse for being lazy and not escaping variables in views.
 
+Classes autoloading
+-------------------
+The first time you refer to a class called `A_B_C`, the file `/classes/a/b/c.php` will be automatically included. If the code of the class `A_B_C` is indeed in the file `/classes/a/b/c.php`, the class will be loaded automatically without any need for you to include anything explicitly.
+
+**So a class called `A_B_C` should always be located in the file `/classes/a/b/c.php`.**
+
+Additionally, and although this is not strictly required, if a class `B` extends a class `A`, then it should be called `A_B` (and thus be located in the file `/classes/a/b.php`). This way the directory structure of the `classes` folder will mirror the class hierarchy.
+
 Controllers
 -----------
-All controllers must extend the **__`Controller`__** class (and thus be called `Controller_Xxx` and be located in the file `/classes/controller/xxx.php`).
- 
-Resources
----------
-A resource is something that can be reached through an URL and returns some content.
+In Sapling controllers aren't classes but closures associated with an URI pattern. When the requested URI matches the URI pattern, the closure is executed and whatever it **returns** is sent to the client as a response.
 
-In this framework, resources are controller functions associated with an URI pattern. When the requested URI matches the pattern of a resource, it is executed and whatever it returns is sent to the client as a response.
+Controllers should be registered in the file `bootstrap.php`.
 
-Resources must be explicitly registered in the `index.php` file, using the **__`Resource::register($controller, $method, $pattern)`__** function, where :
-* `$controller` is the name of the controller class (without the `Controller_` prefix),
-* `$method` is the name of the method,
-* `$pattern` is the URI pattern that will, when the requested URI matches it, trigger the execution of the resource.
+### Inline definition
+
+If the code of the closure is relatively short, the controllers may be defined entirely in the `bootstrap.php` file, like so :
+
+```PHP
+<?php
+Controller::register($name)->on($method, $pattern)->execute($bindings, $closure);
+```
+
+Where :
+* `$name` is the name of the controller. It can be used to refer to it later on.
+* `$method` is the HTTP method accepted by the controller. To accept more than one, pass an array.
+* `$pattern` is the URI pattern that triggers the execution of the closure.
+* `$bindings` is the array of bindings, one by closure argument, describing from where the data should be pulled.
+* `$closure` is the closure that define the content returned by the controller.
+
+For example let's take a closer look at the code that defines the test page :
+
+```PHP
+<?php
+Controller::register("test")->on("GET", "/test/<a>")->execute(
+	array(Bind::URI("a"), Bind::GET("b")),
+	function($x, $y) {
+		return "Test page called with parameters : $x, $y";
+	}
+);
+```
+
+The controller is called `"test"`. It reacts on `"GET"` HTTP requests, but only those that match the pattern `"/test/<a>"`. The closure has two arguments : `$x` and `$y`. The first one is bound to the URI parameter `a` while the second one is bound to the value of the key `b` in the `$_GET` superglobal array.
+
+### Definition in a separate file
+
+If the code of the closure is long, you may find it more convenient to define it in a separate file.
+
+When registering a controller in `bootstrap.php`, you may omit the call to `->execute($bindings, $closure)`. In this case, the framework expects the bindings and closure to be defined in a file located in the `controllers` folder in a subpath matching the identifier of the controller.
+
+For example if we have this in the file `bootstrap.php` :
+```PHP
+<?php
+Controller::register("blog/post/edit")->on("GET", "edit/post/<id:\\d+>");
+```
+
+Then the following must be located in the file `/controllers/blog/post/edit.php` :
+```PHP
+<?php
+return array(
+	array(Bind::URI("id")),
+	function($post_id) {
+		// Return HTML of blog post of given id.
+	}
+);
+```
+
+As you can see, controller identifiers are actually structured like relative paths. Those path aren't related at all to what URI the controller matches. They should be chosen to describe at best the logical hierarchy of controllers.
 
 URI patterns
 ------------
-URI patterns are URI strings that may include parameter segments. Parameters are regex delimited by parentheses following the [PCRE syntax](http://www.php.net/manual/en/reference.pcre.pattern.syntax.php).
+URI patterns are URI strings that may include named parameters, for example `"/hello/<a>"`. By default, parameters match any sequence of characters but `/`. The range of strings that a parameter matches can be restricted by using a [regex](http://www.php.net/manual/en/reference.pcre.pattern.syntax.php), for example `"/hello/<a:\\d+>"`.
 
 More precisely, URI patterns are turned into regex by the following process :
 
 * `URI_ROOT` is added at the beginning,
-* slashes `/` are prefixed with a `\`,
-* a leading `^` and a trailing `$` are added.
+* anything regex special character that appear outside a parameter definition is escaped,
+* parameters are turned into [named subpatterns](http://www.php.net/manual/en/regexp.reference.subpatterns.php),
+* a leading `^` and a trailing `$i` are added.
 
-If the website is located in the directory `sub`, then the following URI pattern `/hello/world` becomes `^\\/sub\\/hello\\/world$` and matches the URL `http://www.mydomain.com/sub/hello/world`.
+If the website is located in the directory `/sub`, then the following URI pattern `/hello/<a:\\d+>` becomes `^"\\/sub\\/hello\\/(?<a>\\d+)$i"` and matches the URL `http://www.mydomain.com/sub/hello/123`.
 
-Routing
--------
-Routing is the process of calling the right resource with the right parameters, given a requested URI.
+Each named parameter in the URI pattern becomes available for binding with a closure argument using the syntax `Bind:URI($param)`.
 
-This is done by looping over all the registered resource patterns until we find one that matches the requested URI. When that happens, the associated controller is instanciated and the resource function is called, with parameters values extracted from the URI passed as arguments.
+Bindings
+--------
+For each controller, and for each closure argument, a binding must be defined. Each binding describes from which parameter in the URI or in the superglobal arrays the data should be pulled from to feed a closure argument.
 
-Thus, if you register a resource like this `Resource::register('test','index', 'test/(\w+)/(\w+)');` then for the requested URL `http://www.mydomain.com/test/hello/world`, the method `->index($a, $b)` will be called on the controller `Controller_Test` with `$a == 'hello'` and `$b == 'world'`.
+### Defining bindings
+For example, given the following controller :
+```PHP
+<?php
+Controller::register("test")->on("POST", "/test/<a>")->execute(
+	array(Bind::URI("a"), Bind::GET("b"), Bind::POST("c"), Bind::COOKIE("d"), Bind::REQUEST("e")),
+	function($v, $w, $x, $y, $z) {
+		// ...
+	}
+);
+```
+
+When the URI `/test/1?b=2&e=5` is requested with `$_POST['c'] === 3` and `$_COOKIE['d'] === 4`, the closure will be called with the arguments `1, 2, 3, 4, 5`.
+
+### Bindings VS accessing superglobal arrays
+One may wonder what's the difference between defining bindings like this :
+```PHP
+<?php
+Controller::register("test")->on("GET", "/test/<a>")->execute(
+	array(Bind::URI("a"), Bind::GET("b"), Bind::GET("c")),
+	function($x, $y, $z) {
+		// ...
+	}
+);
+```
+...and accessing superglobal arrays directly in the closure, like this :
+```PHP
+<?php
+Controller::register("test")->on("GET", "/test/<a>")->execute(
+	array(Bind::URI("a")),
+	function($x) {
+		$y = $_GET['b'];
+		$z = $_GET['c'];
+		// ...
+	}
+);
+```
+
+Apart from the purely esthetical value of treating all arguments the same way, the advantage of using bindings is twofold :
+* If the bindings are defined explicitely, the framework can make use of them to help you automatically generate proper URIs : `Controller::get("test")->uri(1, 2, 3)` generates the URI `/test/1?b=2&c=3` (see [reverse routing](#reverse-routing)). This isn't possible otherwise.
+* If superglobal arrays are accessed in the closure, you can't call it yourself without messing with the superglobal arrays to set up the right context before the call. This makes it difficult to use for internal requests (see [internal requests](#internal-requests)).
 
 Reverse routing
 ---------------
-While routing goes from URI to resource and parameters, reverse routing goes the other way around. Given a resource and some parameters, it is the process of generating the URI that points to it.
+While routing goes from URI to controller and arguments, reverse routing goes the other way around. Given a controller and arguments, it is the process of generating the URI that points to it.
 
-You can generate the URI of a resource by calling **__`Resource::get($controller, $method)->uri($param1, $param2, ...)`__**. This will return the URI pattern associated with the resource where each parameter segment has been replaced by `$param1`, `$param2`, etc.
+You can generate the URI of a controller by calling **__`Controller::get($name)->uri($arg1, $arg2, ...)`__**. This will return the URI (query string included) that, if it is requested, will trigger the execution of the closure with the given arguments.
 
-Always generating URLs this way in views instead of building them manually will ensure that they automatically adjust, should the URI patterns associated with the resources change in the future, or should the directory of the website move in the document tree.
+Always generating URLs this way in views instead of building them manually will ensure that they automatically adjust, should the URI patterns associated with the controller change in the future, or should the directory of the website move in the document tree.
 
-Controller callbacks
---------------------
-**Controller functions that are registered as resources should only return the resource content**, NOT the full page complete with header, footer, etc.
+Wrappers
+--------
+Wrappers generalize what other frameworks call filters, or before and after callbacks.
 
-Wrapping the content of a resource into the website layout is the role of two callbacks :
-* `Controller->before()` : called just before the resource function,
-* `Controller->after($content)` : called just after the resource function with the content it returned.
 
-The `before()` callback is where whatever template engine you decide to use shall be initialized. The `after($content)` callback is where the content generated by the resource should be wrapped in the full site layout. **The return of the `after($content)` callback will be echoed as the HTTP response to the request.**
+### Layout
+Controllers should only return an HTML fragment. Wrapping that fragment into the full site layout should be accomplished through wrappers, like this :
 
-These callbacks should be defined in the base controller class, and overridden in those controllers that require a special layout to be used.
+### Authorizations
 
-Separating the content of a resource from the full page layout this way is more flexible because it allows resources to include other resources content into their own (see HMVC and internal requests below) and more DRY because the before and after callbacks are likely to be the same for many resources.
 
 Internal (HMVC) requests
 ------------------------
-You can get the content generated by a resource by calling **__`Resource::get($controller, $method)->content($param1, $param2, ...)`__**. When you do so, the `before()` and `after($content)` callbacks are NOT called. The resource content is returned raw, not wrapped into the website layout (should you need that, you may call `Resource::get($controller, $method)->page($param1, $param2, ...)`). This is called an internal request (as opposed to a client request).
+You can get the content generated by a controller by calling **__`Controller::get($identifier)->content($arg1, $arg2, ...)`__**. When you do so, the closure and all of its wrappers are executed. Should you need the raw content generated by the closure, not wrapped into wrappers, you can call **__`Controller::get($identifier)->raw($arg1, $arg2, ...)`__**. The above function calls is called an internal request (as opposed to a client request).
 
-This allows for nesting of resources contents, thus the name Hierarchical MVC (HMVC).
+This allows for nesting of controller contents, thus the name Hierarchical MVC (HMVC).
 
 Templating system
 -----------------
