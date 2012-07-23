@@ -14,6 +14,35 @@ But you won't find :
 * an ORM,
 * helpers to handle file transfers, forms, etc.
 
+1. [Requirements](#requirements)
+2. [Installation](#installation)
+3. [Directory structure](#directory-structure)
+4. [Constants](#constants)
+5. [Global functions](#global-functions)
+    1. [The e() function](#the-e()-function)
+6. [Classes autoloading](#classes-autoloading)
+7. [Controllers](#controllers)
+    1. [Inline definition](#inline definition)
+    2. [Definition in a separate file](#definition-in-a-separate-file)
+    3. [Why closures and not a class hierarchy ?](#why-closures-and-not-a-class-hierarchy-?)
+8. [URI patterns](#URI-patterns)
+9. [Bindings](#bindings)
+    1. [Defining bindings](#defining-bindings)
+    2. [Bindings VS accessing superglobal arrays](#bindings-VS-accessing-superglobal-arrays)
+10. [Reverse routing](#reverse-routing)
+11. [Wrappers](#wrappers)
+    1. [Resources](#resources)
+    2. [Wrappers](#wrappers)
+    3. [Examples](#examples)
+        1. [Website layout](#website-layout)
+        2. [Authorizations](#authorizations)
+12. [Controller collections](#controller-collections)
+13. [Internal(HMVC) requests](#internal-(HMVC)-requests)
+14. [Templating system](#templating-system)
+    1. [Echo VS return](#echo-VS-return)
+    2. [Views](#Views)
+    3. [Page](#Page)
+
 Requirements
 ------------
 PHP 5.3, apache with mod_rewrite enabled.
@@ -299,7 +328,7 @@ $collection = Controller::find(function (Controller $c) {
 });
 ```
 
-Any function calls on a collection is forwarded to every controller in the collection. This is way the following code applies the admin role wrapper to all controller in the admin section :
+Any function calls on a collection is forwarded to every controller in the collection. This is why the following code applies the admin role wrapper to all controller in the admin section :
 ```PHP
 <?php
 Controller::find("admin/**")->wrap(new Wrapper_HasRole('admin'));
