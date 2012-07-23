@@ -261,9 +261,11 @@ class Controller {
 	 * Adds a wrapper on the wrapper stack.
 	 * 
 	 * @param Wrapper $wrapper
+	 * @return Controller
 	 */
 	public function wrap(Wrapper $wrapper) {
 		$this->wrappers[] = $wrapper;
+		return $this;
 	}
 	
 	/**

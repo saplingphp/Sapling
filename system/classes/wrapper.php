@@ -31,6 +31,7 @@ abstract class Wrapper {
 	 * Gets the content returned by the resource, perhaps transforms it in some way, and returns it.
 	 * 
 	 * @param Resource $resource
+	 * @return string
 	 */
 	abstract public function wrap(Resource $resource);
 }

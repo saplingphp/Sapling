@@ -24,9 +24,11 @@ class ControllerCollection {
 	 * 
 	 * @param string $name
 	 * @param array $arguments
+	 * @return ControllerCollection
 	 */
 	public function __call($name, $arguments) {
 		foreach($this->controllers as $controller)
 			call_user_func_array(array($controller, $name), $arguments);
+		return $this;
 	}
 }
