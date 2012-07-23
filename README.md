@@ -190,7 +190,7 @@ Each named parameter in the URI pattern becomes available for binding with a clo
 
 Bindings
 --------
-For each controller, and for each closure argument, a binding must be defined. Each binding describes from which parameter in the URI or in the superglobal arrays the data should be pulled from to feed a closure argument.
+For each controller, and for each closure argument, a binding must be defined. Each binding describes from which parameter in the URI or from which key in the superglobal arrays the data should be pulled to feed its closure argument.
 
 ### Defining bindings
 For example, given the following controller :
