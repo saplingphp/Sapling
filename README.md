@@ -94,11 +94,11 @@ When registering a controller in `bootstrap.php`, you may omit the call to `->ex
 For example in the file `bootstrap.php` :
 ```PHP
 <?php
-Controller::register("blog/post")->on("GET", "/blog/post/<id:\\d+>");
+Controller::register("blog/post")->on("GET", "/post/<id:\\d+>");
 );
 ```
 
-And in the file `/controllers/blog/test.php` :
+And in the file `/controllers/blog/post.php` :
 ```PHP
 <?php
 return array(
@@ -108,6 +108,8 @@ return array(
 	}
 );
 ```
+
+As you can see, controller identifiers are actually structured like relative paths. Those path aren't related at all to what URI the controller matches. They should be chosen to describe at best the logical hierarchy of controllers.
 
 URI patterns
 ------------
