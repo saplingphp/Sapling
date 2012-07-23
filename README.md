@@ -214,8 +214,10 @@ Wrappers
 --------
 Wrappers generalize what some frameworks call filters, or before and after callbacks. It is the main mechanism of code reuse for controllers in Sapling.
 
+### Resources
 Wrappers act on a `Resource`. A `Resource` is an object able to generate some content. It has a single function that returns a string : `->content()`. For example, internally, when a request is made for a controller to execute with some arguments, the closure and its arguments are packed together into a `Resource` object ready to deliver some content when (and if) its `->content()` function is called.
 
+### Wrappers
 A `Wrapper` is also an object with a single function that returns a string, but it takes a `Resource` as parameter : `->wrap(Resource $resource)`. When `->wrap(...)` is called, it is supposed to get the content of the `Resource`, transform it in some way, and return it. But it may also decide not to execute the `Resource` at all and throw an exception, for example if some condition isn't met. It's up to you what you put in wrappers.
 
 Wrappers can be wrapped on top of each other around controllers like this :
@@ -224,9 +226,10 @@ Wrappers can be wrapped on top of each other around controllers like this :
 Controller::get($identifier)->wrap($wrapper1)->wrap($wrapper2);
 ```
 
+### Examples
 The following examples illustrate two ways one can define wrappers : with a closure directly in `bootstrap.php`, or by extending the `Wrapper` class.
 
-### Website layout
+#### Website layout
 Controllers should only return an HTML fragment. Wrapping that fragment into the full site layout should be accomplished through wrappers. Let's take a look at the `Wrapper` defined in `bootstrap.php`. It gets the content of its `$resource` parameter, wraps it into the website template (see [templating system](#templating-system)), and returns the result :
 
 ```PHP
@@ -243,7 +246,7 @@ It is then wrapped around all controllers like this (see [controller collections
 Controller::find("**")->wrap($layout);
 ```
 
-### Authorizations
+#### Authorizations
 The following wrapper class prevents the execution of a controller if the current user doesn't have a given role.
 
 File `classes/wrapper/hasrole.php`:
@@ -261,12 +264,42 @@ class Wrapper_HasRole extends Wrapper {
 		if ($user->hasRole($this->role))
 			return $resource->content();
 		else
-			throw new Exception("...");
+			throw new Exception("..."); // Or return error page HTML, redirect, or something
 	}
 }
 ```
 
-File `bootstrap.php` :
+File `bootstrap.php` : we assign the wrapper to all controllers in the admin area of the site (see [controller collections](controller-collections)).
+```PHP
+<?php
+Controller::find("admin/**")->wrap(new Wrapper_HasRole('admin'));
+```
+
+Controller collections
+----------------------
+It isn't convenient, and error prone, to assign wrappers to every controllers one by one. As a way around this, Sapling allows you to define controllers collections.
+
+A controller collection is defined by calling the `Controller::find($expression)` function. The `$expression` argument is a pattern that will be matched agains the identifiers of every controllers defined so far. The pattern allows for two wildcards :
+
+1. `*` : matches any sequence of characters but `/`,
+2. `**` : matches any sequence of characters including `/`.
+
+For example :
+```PHP
+<?php
+$collection1 = Controller::find("admin/**"); // Matches "admin/x", "admin/x/y", "admin/x/y/z", etc...
+$collection2 = Controller::find("*/faq");    // Matches "x/faq", "y/faq", "z/faq", etc...
+```
+
+For more complicated use cases, the `Controller::find($expression)` function also accepts a closure. For example, to define the collection of all controllers whose identifiers don't begin with `"admin"` :
+```PHP
+<?php
+$collection = Controller::find(function (Controller $c) {
+	return $c->match("admin/**") ? false : true;
+});
+```
+
+Any function calls on a collection is forwarded to every controller in the collection. This is way the following code applies the admin role wrapper to all controller in the admin section :
 ```PHP
 <?php
 Controller::find("admin/**")->wrap(new Wrapper_HasRole('admin'));
