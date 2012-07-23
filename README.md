@@ -3,7 +3,7 @@ Sapling
 
 Sapling is an HMVC microframework for PHP that aims to cover only the minimum requirements to start a new PHP project.
 
-More specifically you will find here :
+Specifically you will find here :
 * an URL router / reverse router,
 * an infrastructure for controllers,
 * a class autoloader,
@@ -68,9 +68,9 @@ It's a small thing but this way there is no excuse for being lazy and not escapi
 
 Controllers
 -----------
-In Sapling controllers aren't classes but closures that return some content. Each controller is associated with an URI pattern. When the requested URI matches the URI pattern of a controller, the closure is executed and whatever it returns is sent to the client as a response.
+In Sapling controllers aren't classes but closures associated with an URI pattern. When the requested URI matches the URI pattern, the closure is executed and whatever it **returns** is sent to the client as a response.
 
-Controllers should be registered in the file `bootstrap.php`. The code required to register a controller has the following structure :
+Controllers should be registered in the file `bootstrap.php`, like so :
 
 ```PHP
 <?php
@@ -96,19 +96,20 @@ Controller::register("test")->on("GET", "/test/<a>")->execute(
 );
 ```
 
-The controller is called `"test"`. It reacts on `"GET"` HTTP requests, but only those that match the pattern `"/test/<a>"`. The closure has two parameters : `$x` and `$y`. The first one is bound to the URI parameter `<a>` while the second will be pulled from the `$_GET` value of the key `b`.
+The controller is called `"test"`. It reacts on `"GET"` HTTP requests, but only those that match the pattern `"/test/<a>"`. The closure has two parameters : `$x` and `$y`. The first one is bound to the URI parameter `<a>` while the second one is bound to the value of the key `b` in the `$_GET` superglobal array.
  
 URI patterns
 ------------
-URI patterns are URI strings that may include parameter segments. Parameters are regex delimited by parentheses following the [PCRE syntax](http://www.php.net/manual/en/reference.pcre.pattern.syntax.php).
+URI patterns are URI strings that may include named parameters, for example `"/hello/<a>"`. By default, parameters match any sequence of characters but `/`. The range of strings that a parameter matches can be restricted by using a [regex](http://www.php.net/manual/en/reference.pcre.pattern.syntax.php), for example `"/hello/<a:\\d+>"`.
 
 More precisely, URI patterns are turned into regex by the following process :
 
 * `URI_ROOT` is added at the beginning,
-* slashes `/` are prefixed with a `\`,
-* a leading `^` and a trailing `$` are added.
+* anything regex special character that appear outside a parameter definition is escaped,
+* parameters are turned into [named subpatterns](http://www.php.net/manual/en/regexp.reference.subpatterns.php),
+* a leading `^` and a trailing `$i` are added.
 
-If the website is located in the directory `sub`, then the following URI pattern `/hello/world` becomes `^\\/sub\\/hello\\/world$` and matches the URL `http://www.mydomain.com/sub/hello/world`.
+If the website is located in the directory `/sub`, then the following URI pattern `/hello/<a:\\d+>` becomes `^"\\/sub\\/hello\\/(?<a>\\d+)$i"` and matches the URL `http://www.mydomain.com/sub/hello/123`.
 
 Routing
 -------
