@@ -127,7 +127,7 @@ Each named parameter in the URI pattern becomes available for binding with a clo
 
 Bindings
 --------
-For each controller, and for each closure argument, a binding should be defined. Each binding describes from which parameter in the URI or in the superglobal arrays the data should be pulled to feed a closure argument.
+For each controller, and for each closure argument, a binding should be defined. Each binding describes from which parameter in the URI or in the superglobal arrays the data should be pulled from to feed a closure argument.
 
 For example, given the following controller :
 ```PHP
@@ -142,6 +142,32 @@ Controller::register("test")->on("POST", "/test/<a>")->execute(
 
 When the URI `/test/1?b=2&e=5` is requested with `$_POST['c'] === 3` and `$_COOKIE['d'] === 4`, the closure will be called with the arguments `1, 2, 3, 4, 5`.
 
+One may wonder what's the difference between defining bindings like this :
+```PHP
+<?php
+Controller::register("test")->on("GET", "/test")->execute(
+	array(Bind::GET("a"), Bind::GET("b")),
+	function($x, $y) {
+		// ...
+	}
+);
+```
+...and accessing superglobal arrays directly in the closure, like this :
+```PHP
+<?php
+Controller::register("test")->on("GET", "/test")->execute(
+	array(),
+	function() {
+		$x = $_GET['a'];
+		$y = $_GET['b'];
+		// ...
+	}
+);
+```
+
+The difference is twofold :
+* If the bindings are defined explicitely, the framework can make use of them to help you automatically generate proper URIs : `Controller::get("test")->uri(1, 2)` generates the URI `/test?a=1&b=2` (see [reverse routing](#reverse-routing)). This isn't possible otherwise.
+* If superglobal arrays are accessed in the closure, you can't call it yourself without messing with the superglobal arrays to set up the right context before the call. This makes it difficult to use for internal requests.
 
 Reverse routing
 ---------------
