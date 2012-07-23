@@ -214,14 +214,34 @@ Wrappers
 --------
 Wrappers generalize what some frameworks call filters, or before and after callbacks.
 
-Wrappers act on `Resource`s. A `Resource` is an object able to generate some content. It has a single function that returns a string : `->content()`. For example, internally, when a request is made for a controller to execute with some arguments, the closure and its arguments array are packed together into a `Resource` object ready to deliver some content when (and if) the `->content()` function is called.
+Wrappers act on `Resource`s. A `Resource` is an object able to generate some content. It has a single function that returns a string : `->content()`. For example, internally, when a request is made for a controller to execute with some arguments, the closure and its arguments are packed together into a `Resource` object ready to deliver some content when (and if) its `->content()` function is called.
 
-A `Wrapper` is also an object with a single function that returns a string, but it takes a `Resource` as parameter : `->wrap(Resource $resource)`.
+A `Wrapper` is also an object with a single function that returns a string, but it takes a `Resource` as parameter : `->wrap(Resource $resource)`. When `->wrap(...)` is called, it is supposed to get the content of the `Resource`, transform it in some way, and return it. But it may also decide not to execute the `Resource` at all and throw an exception, for example if some condition isn't met.
 
+Wrappers can be stacked on top of each other around controllers like this :
+```PHP
+<?php
+Controller::get($identifier)->wrap($wrapper1)->wrap($wrapper2);
+```
 
+The following examples illustrate two ways one can define wrappers : with a closure directly in `bootstrap.php`, or by extending the `Wrapper` class.
 
-### Layout
-Controllers should only return an HTML fragment. Wrapping that fragment into the full site layout should be accomplished through wrappers, like this :
+### Website layout
+Controllers should only return an HTML fragment. Wrapping that fragment into the full site layout should be accomplished through wrappers. Let's take a look at the `Wrapper` defined in `bootstrap.php`. It gets the content of its `$resource` parameter, wraps it into the website template (see [templating system](#templating-system)), and returns the result :
+
+```PHP
+<?php
+$layout = Wrapper::create(function(Resource $resource) {
+	View::page('site');
+	return View::page()->set('content', $resource->content())->render();
+});
+```
+
+It is then wrapped around all controllers like this (see [controller collections](controller-collections)) :
+```PHP
+<?php
+Controller::find("**")->wrap($layout);
+```
 
 ### Authorizations
 
