@@ -95,7 +95,6 @@ For example in the file `bootstrap.php` :
 ```PHP
 <?php
 Controller::register("blog/post")->on("GET", "/post/<id:\\d+>");
-);
 ```
 
 And in the file `/controllers/blog/post.php` :
