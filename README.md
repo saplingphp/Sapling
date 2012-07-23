@@ -129,6 +129,7 @@ Bindings
 --------
 For each controller, and for each closure argument, a binding should be defined. Each binding describes from which parameter in the URI or in the superglobal arrays the data should be pulled from to feed a closure argument.
 
+### Defining bindings
 For example, given the following controller :
 ```PHP
 <?php
@@ -142,6 +143,7 @@ Controller::register("test")->on("POST", "/test/<a>")->execute(
 
 When the URI `/test/1?b=2&e=5` is requested with `$_POST['c'] === 3` and `$_COOKIE['d'] === 4`, the closure will be called with the arguments `1, 2, 3, 4, 5`.
 
+### Bindings VS accessing superglobals arrays
 One may wonder what's the difference between defining bindings like this :
 ```PHP
 <?php
