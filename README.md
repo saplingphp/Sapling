@@ -16,17 +16,18 @@ But you won't find :
 
 Table of contents
 -----------------
+
 1. [Requirements](#requirements)
 2. [Installation](#installation)
 3. [Directory structure](#directory-structure)
 4. [Constants](#constants)
 5. [Global functions](#global-functions)
-    5.1. [The e() function](#the-e-function)
+    5`.1. [The e() function](#the-e-function)
 6. [Classes autoloading](#classes-autoloading)
 7. [Controllers](#controllers)
-    7.1. [Inline definition](#inline-definition)
-    7.2. [Definition in a separate file](#definition-in-a-separate-file)
-    7.3. [Why closures and not a class hierarchy ?](#why-closures-and-not-a-class-hierarchy)
+    7`.1. [Inline definition](#inline-definition)
+    7`.2. [Definition in a separate file](#definition-in-a-separate-file)
+    7`.3. [Why closures and not a class hierarchy ?](#why-closures-and-not-a-class-hierarchy)
 8. [URI patterns](#URI-patterns)
 9. [Bindings](#bindings)
     9.1. [Defining bindings](#defining-bindings)
