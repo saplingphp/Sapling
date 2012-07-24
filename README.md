@@ -31,7 +31,8 @@ Table of contents
 8. [URI patterns](#URI-patterns)
 9. [Bindings](#bindings)
     1. [Defining bindings](#defining-bindings)
-    2. [Bindings VS accessing superglobal arrays](#bindings-vs-accessing-superglobal-arrays)
+    2. [Automatic bindings](#automatic-bindings)
+    3. [Bindings VS accessing superglobal arrays](#bindings-vs-accessing-superglobal-arrays)
 10. [Reverse routing](#reverse-routing)
 11. [Wrappers](#wrappers)
     1. [Resources](#resources)
@@ -42,9 +43,9 @@ Table of contents
 12. [Controller collections](#controller-collections)
 13. [Internal (HMVC) requests](#internal-hmvc-requests)
 14. [Templating system](#templating-system)
-    1. [Echo VS return](#echo-VS-return)
-    2. [Views](#Views)
-    3. [Page](#Page)
+    1. [Echo VS return](#echo-vs-return)
+    2. [Views](#views)
+    3. [Page](#page)
 
 Requirements
 ------------
@@ -190,9 +191,11 @@ Each named parameter in the URI pattern becomes available for binding with a clo
 
 Bindings
 --------
-For each controller, and for each closure argument, a binding must be defined. Each binding describes from which parameter in the URI or from which key in the superglobal arrays the data should be pulled to feed its closure argument.
+For each controller, and for each closure argument, a binding must exist. Each binding describes from which parameter in the URI or from which key in the superglobal arrays the data should be pulled to feed the closure argument.
 
-### Defining bindings
+### Defining bindings explicitely
+Bindings can be explicitely defined by using the first argument of the `->execute($bindings, $closure)` method.
+
 For example, given the following controller :
 ```PHP
 <?php
@@ -205,6 +208,17 @@ Controller::register("test")->on("POST", "/test/<a>")->execute(
 ```
 
 When the URI `/test/1?b=2&e=5` is requested with `$_POST['c'] === 3` and `$_COOKIE['d'] === 4`, the closure will be called with the arguments `1, 2, 3, 4, 5`.
+
+### Automatic bindings
+Sapling can also infer bindings automatically from the names of the closure parameters. The algorithm goes as follows :
+
+Given a closure parameter called "$x"
+* if there is an URI parameter called "<x>", the binding will be `Bind::URI('x')`,
+* otherwise the binding will be `Bind::REQUEST('x')`.
+
+According to those bindings, Sapling will look for each closure argument in the URI first, and if it doesn't find it, in the [$_REQUEST](http://php.net/manual/en/reserved.variables.request.php) superglobal array.
+
+URI automatic generation will work as expected according to those bindings (see [reverse routing](#reverse-routing)).
 
 ### Bindings VS accessing superglobal arrays
 One may wonder what's the difference between defining bindings like this :
