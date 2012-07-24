@@ -213,7 +213,7 @@ When the URI `/test/1?b=2&e=5` is requested with `$_POST['c'] === 3` and `$_COOK
 Sapling can also infer bindings automatically from the names of the closure parameters. The algorithm goes as follows :
 
 Given a closure parameter called "$x"
-* if there is an URI parameter called "<x>", the binding will be `Bind::URI('x')`,
+* if there is an URI parameter called "`<x`>", the binding will be `Bind::URI('x')`,
 * otherwise the binding will be `Bind::REQUEST('x')`.
 
 According to those bindings, Sapling will look for each closure argument in the URI first, and if it doesn't find it, in the [$_REQUEST](http://php.net/manual/en/reserved.variables.request.php) superglobal array.
