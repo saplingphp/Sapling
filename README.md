@@ -210,13 +210,23 @@ Controller::register("test")->on("POST", "/test/<a>")->execute(
 When the URI `/test/1?b=2&e=5` is requested with `$_POST['c'] === 3` and `$_COOKIE['d'] === 4`, the closure will be called with the arguments `1, 2, 3, 4, 5`.
 
 ### Automatic bindings
-Sapling can also infer bindings automatically from the names of the closure parameters. The algorithm goes as follows :
+Sapling can also infer bindings automatically from the names of the closure parameters.
 
-Given a closure parameter called "$x"
-* if there is an URI parameter called "`<x`>", the binding will be `Bind::URI('x')`,
+The algorithm goes as follows : given a closure parameter called `"$x"`,
+* if there is an URI parameter called `"<x>"`, the binding will be `Bind::URI('x')`,
 * otherwise the binding will be `Bind::REQUEST('x')`.
 
-According to those bindings, Sapling will look for each closure argument in the URI first, and if it doesn't find it, in the [$_REQUEST](http://php.net/manual/en/reserved.variables.request.php) superglobal array.
+In other words, Sapling will look for each closure argument in the URI first, and if it doesn't find it, in the [$_REQUEST](http://php.net/manual/en/reserved.variables.request.php) superglobal array.
+
+The test page (<http://localhost/test/hello?b=world>) definition in `bootstrap.php` uses automatic bindings, causing the the argument `$a` to be pulled from the URI and the argument `$b` to be pulled from the `$_REQUEST` array :
+```PHP
+<?php
+Controller::register("test")->on("GET", "/test/<a>")->execute(
+	function($a, $b) {
+		return "Test page called with parameters : $a, $b";
+	}
+);
+```
 
 URI automatic generation will work as expected according to those bindings (see [reverse routing](#reverse-routing)).
 
