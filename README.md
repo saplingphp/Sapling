@@ -228,6 +228,14 @@ Controller::register("test")->on("GET", "/test/<a>")->execute(
 );
 ```
 
+Note that, had the closure been defined in a separate file using automatic bindings, it would have looked like this :
+```PHP
+<?php
+return function($a, $b) {
+	return "Test page called with parameters : $a, $b";
+};
+```
+
 URI automatic generation will work as expected according to those bindings (see [reverse routing](#reverse-routing)).
 
 ### Bindings VS accessing superglobal arrays
