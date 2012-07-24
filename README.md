@@ -118,11 +118,11 @@ If the code of the closure is relatively short, the controllers may be defined e
 
 ```PHP
 <?php
-Controller::register($name)->on($method, $pattern)->execute($bindings, $closure);
+Controller::register($identifier)->on($method, $pattern)->execute($bindings, $closure);
 ```
 
 Where :
-* `$name` is the name of the controller. It can be used to refer to it later on.
+* `$identifier` is the identifier of the controller. It can be used to refer to it later on.
 * `$method` is the HTTP method accepted by the controller. To accept more than one, pass an array.
 * `$pattern` is the URI pattern that triggers the execution of the closure.
 * `$bindings` is the array of bindings, one by closure argument, describing from where the data should be pulled.
