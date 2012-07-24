@@ -155,10 +155,16 @@ class Controller {
     }
     
     /**
-     * Lazy loads implementation and bindings.
+     * Lazy loads implementation and bindings from separate file.
      */
     protected function load_implementation() {
-    	list($this->bindings, $this->implementation) = require(DIR_ROOT_CONTROLLERS . '/' . $this->identifier . '.php'); 
+    	$x = require(DIR_ROOT_CONTROLLERS . '/' . $this->identifier . '.php');
+    	if (is_array($x))
+    		list($this->bindings, $this->implementation) = $x;
+    	else {
+    		$this->implementation = $x;
+    		$this->bindings = $this->infer_bindings();
+    	}       		
     }
 	
 	/**
@@ -316,12 +322,36 @@ class Controller {
 	/**
 	 * Specifies what to execute and how to extract arguments from superglobal arrays.
 	 *
-	 * @param array $bindings
-	 * @param callable $implementation
+	 * @param mixed $x
+	 * @param mixed $y
 	 */
-	public function execute(array $bindings, $implementation = null) {
-		$this->bindings			= $bindings;
-		$this->implementation	= $implementation;
+	public function execute($x = null, $y = null) {
+		if (func_num_args() === 2) {
+			$this->implementation = $y;
+			$this->bindings = $x;
+		}
+		else {
+			$this->implementation = $x;
+			$this->bindings = $this->infer_bindings();
+		}
 		return $this;
 	}
+	
+	/**
+     * Creates bindings array by introspection.
+     *
+     * @return array
+     */
+    protected function infer_bindings() {
+        $bindings = array();
+        $function = new ReflectionFunction($this->implementation);
+        foreach($function->getParameters() as $parameter) {
+            $name = $parameter->getName();
+            if (preg_match("`\\<$name(\\:[^>]+)?\\>`", $this->pattern)) // Does the parameter appear in the URI pattern ?
+                $bindings[] = Bind::URI($name);
+            else
+                $bindings[] = Bind::REQUEST($name);
+        }
+        return $bindings;
+    } 
 }

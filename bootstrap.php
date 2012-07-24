@@ -5,9 +5,8 @@
 /*************************************************************************************/
 
 	Controller::register("test")->on("GET", "/test/<a>")->execute(
-		array(Bind::URI("a"), Bind::GET("b")),
-		function($x, $y) {
-			return "Test page called with parameters : $x, $y";
+		function($a, $b) {
+			return "Test page called with parameters : $a, $b";
 		}
 	);
 
