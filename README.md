@@ -21,8 +21,6 @@ Table of contents
 2. [Installation](#installation)
 3. [Directory structure](#directory-structure)
 4. [Constants](#constants)
-5. [Global functions](#global-functions)
-    1. [The e() function](#the-e-function)
 6. [Classes autoloading](#classes-autoloading)
 7. [Controllers](#controllers)
     1. [Inline definition](#inline-definition)
@@ -46,6 +44,7 @@ Table of contents
     1. [Echo VS return](#echo-vs-return)
     2. [Views](#views)
     3. [Page](#page)
+    4. [The e() function](#the-e-function)
 
 Requirements
 ------------
@@ -84,20 +83,6 @@ The framework defines the following constants that you may find useful should yo
 
 So if you need to build a link to the stylesheet `site.css` in the `style` directory, you write `URI_ROOT_CSS . '/site.css'` .
 
-Global functions
-----------------
-### The e() function
-The file index.php defines the following shortcut for htmlspecialchars :
-
-```PHP
-<?php
-function e($string) {
-	return htmlspecialchars($string);
-}
-```
-
-It's a small thing but this way there is no excuse for being lazy and not escaping variables in views.
-
 Classes autoloading
 -------------------
 The first time you refer to a class called `A_B_C`, the file `/classes/a/b/c.php` will be automatically included. If the code of the class `A_B_C` is indeed in the file `/classes/a/b/c.php`, the class will be loaded automatically without any need for you to include anything explicitly.
@@ -110,62 +95,30 @@ Controllers
 -----------
 In Sapling controllers aren't classes but closures associated with an URI pattern. When the requested URI matches the URI pattern, the closure is executed and whatever it **returns** is sent to the client as a response.
 
-Controllers should be registered in the file `bootstrap.php`.
-
-### Inline definition
-
-If the code of the closure is relatively short, the controllers may be defined entirely in the `bootstrap.php` file, like so :
-
+Controllers must be registered in the file `bootstrap.php` using the following syntax :
 ```PHP
 <?php
-Controller::register($identifier)->on($method, $pattern)->execute($bindings, $closure);
+Controller::execute($path)->on($method, $pattern);
 ```
 
 Where :
-* `$identifier` is the identifier of the controller. It can be used to refer to it later on.
+* `$path` is the path to the file defining the controller closure in the `controllers` directory.
 * `$method` is the HTTP method accepted by the controller. To accept more than one, pass an array.
 * `$pattern` is the URI pattern that triggers the execution of the closure.
-* `$bindings` is the array of bindings, one by closure argument, describing from where the data should be pulled.
-* `$closure` is the closure that define the content returned by the controller.
 
-For example let's take a closer look at the code that defines the test page :
-
+For example let's take a look at the code that defines the test page in the files `bootstrap.php` and `controllers/test.php` :
 ```PHP
-<?php
-Controller::register("test")->on("GET", "/test/<a>")->execute(
-	array(Bind::URI("a"), Bind::GET("b")),
-	function($x, $y) {
-		return "Test page called with parameters : $x, $y";
-	}
-);
+<?php // bootstrap.php
+Controller::execute("test")->on("GET", "/test/<a>");
+```
+```PHP
+<?php // controllers/test.php
+return function($a, $b) {
+    return "Test page called with parameters : $a, $b";
+};
 ```
 
-The controller is called `"test"`. It reacts on `"GET"` HTTP requests, but only those that match the pattern `"/test/<a>"`. The closure has two arguments : `$x` and `$y`. The first one is bound to the URI parameter `a` while the second one is bound to the value of the key `b` in the `$_GET` superglobal array.
-
-### Definition in a separate file
-
-If the code of the closure is long, you may find it more convenient to define it in a separate file.
-
-When registering a controller in `bootstrap.php`, you may omit the call to `->execute($bindings, $closure)`. In this case, the framework expects the bindings and closure to be defined in a file located in the `controllers` folder in a subpath matching the identifier of the controller.
-
-For example if we have this in the file `bootstrap.php` :
-```PHP
-<?php
-Controller::register("blog/post/edit")->on("GET", "edit/post/<id:\\d+>");
-```
-
-Then the following must be located in the file `/controllers/blog/post/edit.php` :
-```PHP
-<?php
-return array(
-	array(Bind::URI("id")),
-	function($post_id) {
-		// Return HTML of blog post of given id.
-	}
-);
-```
-
-As you can see, controller identifiers are actually structured like relative paths. Those path aren't related at all to what URI the controller matches. They should be chosen to describe at best the logical hierarchy of controllers.
+The controller is called `"test"`. It reacts on `"GET"` HTTP requests, but only those that match the pattern `"/test/<a>"`. The closure has two arguments : `$a` and `$b`. The value of the first one is bound to the URI parameter `a` while the second one is bound to the value of the key `b` in the `$_REQUEST` superglobal array (see [Bindings](#bindings)).
 
 ### Why closures and not a class hierarchy ?
 Because controllers can't be properly organized into a single class hiearchy without running into problems of code duplication. And because artificially grouping vaguely related functions into controller classes just to do it the OO way doesn't make sense.
@@ -448,3 +401,15 @@ View::page()->push('scripts',     URI_ROOT_JS  . 'myscript.js');
 ```
 
 A default page view is included with the package, see `/views/site.php`.
+
+### The e() function
+The file index.php defines the following shortcut for htmlspecialchars :
+
+```PHP
+<?php
+function e($string) {
+	return htmlspecialchars($string);
+}
+```
+
+It's a small thing but this way there is no excuse for being lazy and not escaping variables in views.
