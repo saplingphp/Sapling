@@ -24,22 +24,22 @@ class Controller {
 	static protected $controllers = array();
 	
 	/**
-	 * Register a new controller.
+	 * Registers a new controller.
 	 * 
-	 * @param string $identifier
+	 * @param string $path
 	 */
-	static public function register($identifier) {
-		static::$controllers[$identifier] = new static($identifier);
-		return static::$controllers[$identifier];
+	static public function execute($path) {
+		static::$controllers[$path] = new static($path);
+		return static::$controllers[$path];
 	}
 	
 	/**
-	 * Returns the controller of given identifier.
+	 * Returns the controller of given path.
 	 * 
-	 * @param string $identifier
+	 * @param string $path
 	 */
-	static public function get($identifier) {
-		return static::$controllers[$identifier];		
+	static public function get($path) {
+		return static::$controllers[$path];		
 	}
 	
 	/**
@@ -72,7 +72,7 @@ class Controller {
 	 */
 	static public function dispatch() {
 		$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-		foreach(static::$controllers as $identifier => $controller) {
+		foreach(static::$controllers as $controller) {
 			if (in_array($_SERVER['REQUEST_METHOD'], $controller->methods)) {
 				$uri_params = $controller->extract_parameters($uri);
 				if ($uri_params !== false) {
@@ -89,9 +89,9 @@ class Controller {
 	/********************************************************************************************************/
 	
 	/**
-	 * @var string Identifier of this controller.
+	 * @var string Path to this controller closure.
 	 */
-	protected $identifier;
+	protected $path;
 	
 	/**
 	 * @var array Acceptable HTTP methods.
@@ -128,8 +128,8 @@ class Controller {
 	 * 
 	 * @param string $identifier
 	 */
-	protected function __construct($identifier) {
-		$this->identifier		= $identifier;
+	protected function __construct($path) {
+		$this->path = $path;
 	}
 	
 	/**
@@ -155,15 +155,26 @@ class Controller {
     }
     
     /**
-     * Lazy loads implementation and bindings from separate file.
+     * Lazy loads implementation and bindings.
      */
     protected function load_implementation() {
-    	$x = require(DIR_ROOT_CONTROLLERS . '/' . $this->identifier . '.php');
+    	$x = require(DIR_ROOT_CONTROLLERS . '/' . $this->path . '.php');
     	if (is_array($x))
     		list($this->bindings, $this->implementation) = $x;
     	else {
+    		// Implementation :
     		$this->implementation = $x;
-    		$this->bindings = $this->infer_bindings();
+    		
+    		// Bindings :
+	        $this->bindings = array();
+	        $function = new ReflectionFunction($this->implementation);
+	        foreach($function->getParameters() as $parameter) {
+	            $name = $parameter->getName();
+	            if (preg_match("`\\<$name(\\:[^>]+)?\\>`", $this->pattern)) // Does the parameter appear in the URI pattern ?
+	                $this->bindings[] = Bind::URI($name);
+	            else
+	                $this->bindings[] = Bind::REQUEST($name);
+	        }
     	}       		
     }
 	
@@ -297,14 +308,14 @@ class Controller {
 	}
 	
 	/**
-	 * Returns true if the identifier of this controller matches the given expression.
+	 * Returns true if the path of this controller matches the given expression.
 	 * 
 	 * @param string $expr
 	 */
 	public function match($expr) {
 		$expr = preg_quote($expr);
 		$expr = '`^' . strtr($expr, array('\\*\\*' => '.*', '\\*' => '[^/]*')) . '$`i';
-		return preg_match($expr, $this->identifier) === 1;
+		return preg_match($expr, $this->path) === 1;
 	}
 	
 	/**
@@ -318,40 +329,4 @@ class Controller {
 		$this->pattern = URI_ROOT . $pattern;
 		return $this;
 	}
-	
-	/**
-	 * Specifies what to execute and how to extract arguments from superglobal arrays.
-	 *
-	 * @param mixed $x
-	 * @param mixed $y
-	 */
-	public function execute($x = null, $y = null) {
-		if (func_num_args() === 2) {
-			$this->implementation = $y;
-			$this->bindings = $x;
-		}
-		else {
-			$this->implementation = $x;
-			$this->bindings = $this->infer_bindings();
-		}
-		return $this;
-	}
-	
-	/**
-     * Creates bindings array by introspection.
-     *
-     * @return array
-     */
-    protected function infer_bindings() {
-        $bindings = array();
-        $function = new ReflectionFunction($this->implementation);
-        foreach($function->getParameters() as $parameter) {
-            $name = $parameter->getName();
-            if (preg_match("`\\<$name(\\:[^>]+)?\\>`", $this->pattern)) // Does the parameter appear in the URI pattern ?
-                $bindings[] = Bind::URI($name);
-            else
-                $bindings[] = Bind::REQUEST($name);
-        }
-        return $bindings;
-    } 
 }
