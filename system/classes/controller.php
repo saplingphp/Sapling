@@ -84,6 +84,25 @@ class Controller {
 		throw new Exception("No registered controller matches the following uri : " . $uri);
 	}
 	
+	/**
+	 * Turns the pattern into a regex ready to be matched against an URI.
+	 *
+	 * @return string
+	 */
+	static protected function create_regex($pattern) {
+		$regex = '`^'; 
+		$result = preg_split('`(\\<[^:>]+(?:\\:[^>]+)?\\>)`', $pattern, -1, PREG_SPLIT_DELIM_CAPTURE);
+		foreach($result as $segment) {
+			if (preg_match('`^\\<([^:>]+)(?:\\:([^>]+))?\\>$`', $segment, $matches)) {
+				if ( ! isset($matches[2])) $matches[2] = static::REGEX_PARAMETER;
+				$regex .= '(?<' . $matches[1] . '>' . $matches[2] . ')';
+			}
+			else 
+				$regex .= preg_quote($segment);
+		}
+		return $regex . '$`i';
+	}
+	
 	/********************************************************************************************************/
 	/********************************************  INSTANCE  ************************************************/
 	/********************************************************************************************************/
@@ -99,9 +118,9 @@ class Controller {
 	protected $methods;
 	
 	/**
-	 * @var string URI pattern.
+	 * @var string URI patterns.
 	 */	
-	protected $pattern;
+	protected $patterns;
 	
 	/**
 	 * @var array Bindings that describe from where to pull the value of each function argument.
@@ -109,12 +128,12 @@ class Controller {
 	protected $bindings;
 	
 	/**
-	 * @var string URI pattern turned into a regex.
+	 * @var string URI patterns turned into regexes.
 	 */	
-	protected $regex;
+	protected $regexes;
 	
 	/**
-	 * @var callable Callable that generates and returns the content of this controller.
+	 * @var Closure Closure that generates and returns the content of this controller.
 	 */
 	protected $implementation;
 	
@@ -126,10 +145,28 @@ class Controller {
 	/**
 	 * Constructor.
 	 * 
-	 * @param string $identifier
+	 * @param string $path
 	 */
 	protected function __construct($path) {
 		$this->path = $path;
+	}
+	
+	/**
+	 * Specifies the HTTP methods accepted by this controller.
+	 */
+	public function on() {
+		$this->methods = func_get_args();
+		return $this;
+	}
+	
+	/**
+	 * Specifies the URI patterns that trigger the execution of this controller.
+	 */
+	public function matching() {
+		$patterns = func_get_args();
+		foreach($patterns as $pattern)
+			$this->patterns[] = URI_ROOT . $pattern;
+		return $this;
 	}
 	
 	/**
@@ -170,7 +207,7 @@ class Controller {
 	        $function = new ReflectionFunction($this->implementation);
 	        foreach($function->getParameters() as $parameter) {
 	            $name = $parameter->getName();
-	            if (preg_match("`\\<$name(\\:[^>]+)?\\>`", $this->pattern)) // Does the parameter appear in the URI pattern ?
+	            if (preg_match("`\\<$name(\\:[^>]+)?\\>`", $this->patterns[0])) // Does the parameter appear in the URI pattern ?
 	                $this->bindings[] = Bind::URI($name);
 	            else
 	                $this->bindings[] = Bind::REQUEST($name);
@@ -179,44 +216,31 @@ class Controller {
     }
 	
 	/**
-	 * Returns the pattern turned into a regex ready to be matched against an URI. 
+	 * Returns the patterns turned into a regexes ready to be matched against an URI. 
 	 * 
-	 * @return string
+	 * @return array
 	 */
-	protected function regex() {
-		if ( ! isset($this->regex))
-			$this->regex = $this->create_regex();
-		return $this->regex;
-	}
-	
-	/**
-	 * Turns the pattern into a regex ready to be matched against an URI. 
-	 * 
-	 * @return string
-	 */
-	protected function create_regex() {
-		$regex = '`^'; 
-		$result = preg_split('`(\\<[^:>]+(?:\\:[^>]+)?\\>)`', $this->pattern, -1, PREG_SPLIT_DELIM_CAPTURE);
-		foreach($result as $segment) {
-			if (preg_match('`^\\<([^:>]+)(?:\\:([^>]+))?\\>$`', $segment, $matches)) {
-				if ( ! isset($matches[2])) $matches[2] = static::REGEX_PARAMETER;
-				$regex .= '(?<' . $matches[1] . '>' . $matches[2] . ')';
-			}
-			else 
-				$regex .= preg_quote($segment);
+	protected function regexes() {
+		if ( ! isset($this->regexes)) {
+			foreach($this->patterns as $pattern)
+				$this->regexes[] = static::create_regex($pattern);
 		}
-		return $regex . '$`i';
+		return $this->regexes;
 	}
 	
 	/**
-	 * Matches the given URI against the regex of the current resource. Returns the array of parameters
-	 * the URI matches, or false otherwise.
+	 * Matches the given URI against the regexes of the current resource. Returns the array of parameters
+	 * if the URI matches, or false otherwise.
 	 * 
 	 * @param string $uri
 	 * @return mixed
 	 */
 	protected function extract_parameters($uri) {
-		return preg_match($this->regex(), $uri, $matches) ? $matches :  false;
+		foreach($this->regexes() as $regex) {
+			if (preg_match($regex, $uri, $matches))
+				return $matches;
+		}
+		return false;
 	}
 	
 	/**
@@ -287,7 +311,7 @@ class Controller {
 			$patterns[] = "`\\<$name(\\:[^>]+)?\\>`";
 			$replacements[] = $value;
 		}
-		$uri_string = preg_replace($patterns, $replacements, $this->pattern, 1);
+		$uri_string = preg_replace($patterns, $replacements, $this->patterns[0], 1);
 		
 		// Build query string :
 		$query_string = http_build_query($get);
@@ -316,17 +340,5 @@ class Controller {
 		$expr = preg_quote($expr);
 		$expr = '`^' . strtr($expr, array('\\*\\*' => '.*', '\\*' => '[^/]*')) . '$`i';
 		return preg_match($expr, $this->path) === 1;
-	}
-	
-	/**
-	 * Specifies the HTTP methods accepted by a controller and which URI pattern triggers its execution.
-	 * 
-	 * @param mixed $methods
-	 * @param string $pattern
-	 */
-	public function on($methods, $pattern) {
-		$this->methods = is_array($methods) ? $methods : array($methods);
-		$this->pattern = URI_ROOT . $pattern;
-		return $this;
 	}
 }
