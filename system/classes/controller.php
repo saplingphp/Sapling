@@ -76,7 +76,7 @@ class Controller {
 			if (in_array($_SERVER['REQUEST_METHOD'], $controller->methods)) {
 				$uri_params = $controller->extract_parameters($uri);
 				if ($uri_params !== false) {
-					$params = $controller->resolve_bindings($uri_params, $_GET, $_POST, $_COOKIE, $_REQUEST);
+					$params = $controller->resolve_bindings($uri_params);
 					return call_user_func_array(array($controller, 'content'), $params);	
 				}
 			}
@@ -172,7 +172,7 @@ class Controller {
 	/**
 	 * Implementation getter.
 	 * 
-	 * @return callable
+	 * @return Closure
 	 */
 	protected function implementation() {
 		if ( ! isset($this->implementation))
@@ -205,14 +205,9 @@ class Controller {
     		// Bindings :
 	        $this->bindings = array();
 	        $function = new ReflectionFunction($this->implementation);
-	        foreach($function->getParameters() as $parameter) {
-	            $name = $parameter->getName();
-	            if (preg_match("`\\<$name(\\:[^>]+)?\\>`", $this->patterns[0])) // Does the parameter appear in the URI pattern ?
-	                $this->bindings[] = Bind::URI($name);
-	            else
-	                $this->bindings[] = Bind::REQUEST($name);
-	        }
-    	}       		
+	        foreach($function->getParameters() as $parameter)
+               $this->bindings[] = Bind::ANY($parameter->getName());
+    	}
     }
 	
 	/**
@@ -237,26 +232,25 @@ class Controller {
 	 */
 	protected function extract_parameters($uri) {
 		foreach($this->regexes() as $regex) {
-			if (preg_match($regex, $uri, $matches))
+			if (preg_match($regex, $uri, $matches)) {
+				array_shift($matches);
 				return $matches;
+			}
 		}
 		return false;
 	}
 	
 	/**
-	 * Extract the parameter list from the given arrays according to bindings.
+	 * Extract the parameter list from the superglobal arrays according to bindings.
 	 * 
-	 * @param array $uri
-	 * @param array $get
-	 * @param array $post
-	 * @param array $cookies
-	 * @param array $request
+	 * @param array $uri_params
 	 * @return array
 	 */
-	protected function resolve_bindings(array $uri, array $get, array $post, array $cookie, array $request) {
+	protected function resolve_bindings($uri_params) {
 		$params = array();
+		$any = $uri_params + $_GET + $_POST;
 		foreach($this->bindings() as $binding)
-			$params[] = $binding->fetch($uri, $get, $post, $cookie, $request);
+			$params[] = $binding->fetch($uri_params, $_GET, $_POST, $any);
 		return $params;
 	}
 	
@@ -297,13 +291,20 @@ class Controller {
 	 * @param array $params
 	 */
 	public function uri() {
-		// Generate URI and GET parameters arrays :
+		// Generate parameters arrays :
 		$params = func_get_args();
-		$uri = $get = $post = $cookie = $request = array();
+		$uri = $get = $post = $any = array();
 		foreach($this->bindings() as $index => $binding)
-			list($uri, $get, $post, $cookie, $request) = $binding->store($params[$index], $uri, $get, $post, $cookie, $request);
-		if ( ! empty($post) || ! empty($cookie)) throw new Exception("Cannot generate URI.");
-		$get = array_merge($get, $request);
+			list($uri, $get, $post, $any) = $binding->store($params[$index], $uri, $get, $post, $any);
+		if ( ! empty($post)) throw new Exception("Cannot generate URI.");
+		
+		// Split $any array into $uri and $get according to available URI parameters :
+	    foreach($any as $name => $value) {
+	    	if (preg_match("`\\<$name(\\:[^>]+)?\\>`", $this->patterns[0]))
+                $uri[$name] = $value;
+            else
+                $get[$name] = $value;
+        }
 		
 		// Build URI part :
 		$patterns = $replacements = array();

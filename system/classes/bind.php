@@ -39,25 +39,15 @@ abstract class Bind {
 	static public function POST($name) {
 		return new Bind_POST($name);
 	}
-	
+
 	/**
-	 * Factory method for Bind_COOKIE.
+	 * Factory method for Bind_ANY.
 	 * 
 	 * @param string $name
 	 * @return Bind
 	 */
-	static public function COOKIE($name) {
-		return new Bind_COOKIE($name);
-	}
-	
-	/**
-	 * Factory method for Bind_REQUEST.
-	 * 
-	 * @param string $name
-	 * @return Bind
-	 */
-	static public function REQUEST($name) {
-		return new Bind_REQUEST($name);
+	static public function ANY($name) {
+		return new Bind_ANY($name);
 	}
 	
 	/********************************************************************************************************/
@@ -70,11 +60,10 @@ abstract class Bind {
 	 * @param array $uri
 	 * @param array $get
 	 * @param array $post
-	 * @param array $cookie
-	 * @param array $request
+	 * @param array $any
 	 * @return string
 	 */
-	abstract public function fetch($uri, $get, $post, $cookie, $request);
+	abstract public function fetch($uri, $get, $post, $any);
 	
 	/**
 	 * Stores the value into the super-global arrays.
@@ -83,8 +72,7 @@ abstract class Bind {
 	 * @param array $uri
 	 * @param array $get
 	 * @param array $post
-	 * @param array $cookie
-	 * @param array $request
+	 * @param array $any
 	 */
-	abstract public function store($value, $uri, $get, $post, $cookie, $request);
+	abstract public function store($value, $uri, $get, $post, $any);
 }

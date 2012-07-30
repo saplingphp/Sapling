@@ -1,6 +1,6 @@
 <?php
 
-class Bind_GET extends Bind {
+class Bind_ANY extends Bind {
 	/**
 	 * @var string Key in the super-global array this object binds to.
 	 */
@@ -16,11 +16,11 @@ class Bind_GET extends Bind {
 	}
 	
 	public function fetch($uri, $get, $post, $any) {
-		return isset($get[$this->name]) ? $get[$this->name] : null;
+		return isset($any[$this->name]) ? $any[$this->name] : null;
 	}
 	
 	public function store($value, $uri, $get, $post, $any) {
-		if (isset($value)) $get[$this->name] = $value;
+		if (isset($value)) $any[$this->name] = $value;
 		return array($uri, $get, $post, $any);
 	}
 }

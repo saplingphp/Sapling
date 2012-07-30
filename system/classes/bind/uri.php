@@ -15,12 +15,12 @@ class Bind_URI extends Bind {
 		$this->name = $name;
 	}
 	
-	public function fetch($uri, $get, $post, $cookie, $request) {
+	public function fetch($uri, $get, $post, $any) {
 		return isset($uri[$this->name]) ? $uri[$this->name] : null;
 	}
 	
-	public function store($value, $uri, $get, $post, $cookie, $request) {
-		$uri[$this->name] = $value;
-		return array($uri, $get, $post, $cookie, $request);
+	public function store($value, $uri, $get, $post, $any) {
+		if (isset($value)) $uri[$this->name] = $value;
+		return array($uri, $get, $post, $any);
 	}
 }

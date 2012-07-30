@@ -15,12 +15,12 @@ class Bind_POST extends Bind {
 		$this->name = $name;
 	}
 	
-	public function fetch($uri, $get, $post, $cookie, $request) {
+	public function fetch($uri, $get, $post, $any) {
 		return isset($post[$this->name]) ? $post[$this->name] : null;
 	}
 	
-	public function store($value, $uri, $get, $post, $cookie, $request) {
-		$post[$this->name] = $value;
-		return array($uri, $get, $post, $cookie, $request);
+	public function store($value, $uri, $get, $post, $any) {
+		if (isset($value)) $post[$this->name] = $value;
+		return array($uri, $get, $post, $any);
 	}
 }
